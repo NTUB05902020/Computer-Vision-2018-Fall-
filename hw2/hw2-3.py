@@ -68,25 +68,22 @@ def groupup(row, col, data):
 #Main Program
 im = Image.open('output/binarized.bmp')
 (width, height), data_array = im.size, numpy.array(im)
-groups = groupup(height, width, data_array)
-print(len(groups))
-groups = [group for group in groups if len(group) >= 500]
-print(len(groups))
+groups = [group for group in groupup(height, width, data_array) if len(group) >= 500]
 
-
-"""
-
-
-#draw
+#drawing
+plt.figure(figsize=(5,5))
 fig, ax = plt.subplots()
 ax.imshow(im)
 
-rect = patches.Rectangle((450, 0), 100, 512, linewidth=3, edgecolor='r', facecolor='none')
-ax.add_patch(rect)
-plt.plot(255, 255, 'b+', linewidth=7, markersize=12)
-#plt.tight_layout()
-plt.axis('off')
-plt.savefig('output/3.jpg')
-im.close()
+for group in groups:
+	xmin, ymin, xmax, ymax, xavg, yavg, count = width, height, -1, -1, 0, 0, 0
+	for seg in group:
+		xmin, ymin, xmax, ymax = min(xmin, seg[0]), min(ymin, seg[2]), max(xmax, seg[1]), max(ymax, seg[2])
+		xavg, yavg, count = xavg + (seg[1]+seg[0])*(seg[1]-seg[0]+1)/2, yavg + seg[2]*(seg[1]-seg[0]+1), count + (seg[1]-seg[0]+1)
+	xavg, yavg = xavg // count, yavg // count
+	ax.add_patch(patches.Rectangle((xmin, ymin), xmax-xmin, ymax-ymin, linewidth=3, edgecolor='r', facecolor='none')) #draw box
+	plt.plot(xavg, yavg, 'b+', linewidth=28, markersize=20) #draw cross
 
-"""
+plt.axis('off')
+plt.savefig('output/connected_marked.jpg')
+im.close()
