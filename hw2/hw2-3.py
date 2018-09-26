@@ -9,8 +9,8 @@ def overlap(seg1, seg2, connect='4'):
 	else:               #8-connected
 		return False if seg1[1] < (seg2[0]-1) or seg2[1] < (seg1[0]-1) else True
 
-def groupup(row, col, data):
-	segments, find_group, groups = [list() for i in range(row)], dict(), []
+def getsegments(row, col, data):
+	segments = [list() for i in range(row)]
 	for i in range(row):
 		j = 0
 		while j<col:
@@ -19,48 +19,52 @@ def groupup(row, col, data):
 			head = j
 			while j<col and data[i][j]==255: j+=1
 			segments[i] += [(head, j-1, i)]
-	#print(segments)
+	return segments
+
+def mergeGroup(g1, g2, groups, findG):
+	smallG, bigG = g1, g2
+	if len(bigG) < len(smallG): bigG, smallG = smallG, bigG
+	bigG += smallG
+	for seg in smallG: findG[seg] = bigG
+	groups.remove(smallG)
+
+def groupup(segments, row, threshold):
+	find_group, groups = dict(), []
 	#to right-down
 	for seg in segments[0]:
 		#print(groups)
-		new_set = set()
-		new_set.add(seg)
-		groups, find_group[seg] = groups + [new_set], new_set
+		newG = [seg]
+		groups, find_group[seg] = groups + [newG], newG
 	for i in range(1, row):
-		for now_idx, now in enumerate(segments[i]):
+		for now in segments[i]:
 			found_group = False
-			for last_idx, last in enumerate(segments[i-1]):
-				#print(i, now_idx, last_idx)
-				#print(groups)
+			for last in segments[i-1]:
 				if overlap(now, last):
 					found_group = True
 					if now not in find_group:
 						lgroup = find_group[last]
 						find_group[now] = lgroup
-						lgroup.add(now)
+						lgroup.append(now)
 					else:
 						ngroup, lgroup = find_group[now], find_group[last]
-						if ngroup is not lgroup:
-							lgroup |= ngroup
-							for seg in ngroup: find_group[seg] = lgroup
-							groups.remove(ngroup)
+						if ngroup is not lgroup: mergeGroup(ngroup, lgroup, groups, find_group)
 			if not found_group:
-				new_set = set()
-				new_set.add(now)
-				find_group[now], groups = new_set, groups + [new_set]
+				newG = [now]
+				find_group[now], groups = newG, groups + [newG]
 	#to left-up
 	for i in range(row-2, -1, -1):
-		for now_idx, now in enumerate(reversed(segments[i])):
-			for last_idx, last in enumerate(reversed(segments[i+1])):
-				#print(i, now_idx, last_idx)
-				#print(groups)
+		for now in reversed(segments[i]):
+			for last in reversed(segments[i+1]):
 				if overlap(now, last):
 					ngroup, lgroup = find_group[now], find_group[last]
-					if ngroup is not lgroup:
-						lgroup |= ngroup
-						for seg in ngroup: find_group[seg] = lgroup
-						groups.remove(ngroup)
-	return groups
+					if ngroup is not lgroup: mergeGroup(ngroup, lgroup, groups, find_group)
+	#abandon groups by threshold
+	retG = list()
+	for group in groups:
+		num = 0
+		for seg in group: num += (seg[1] - seg[0] + 1)
+		if num >= threshold: retG.append(group)
+	return retG
 
 
 
@@ -68,7 +72,7 @@ def groupup(row, col, data):
 #Main Program
 im = Image.open('output/binarized.bmp')
 (width, height), data_array = im.size, numpy.array(im)
-groups = [group for group in groupup(height, width, data_array) if len(group) >= 500]
+groups = groupup(getsegments(height, width, data_array), height, 500)
 
 #drawing
 plt.figure(figsize=(5,5))
@@ -82,7 +86,7 @@ for group in groups:
 		xavg, yavg, count = xavg + (seg[1]+seg[0])*(seg[1]-seg[0]+1)/2, yavg + seg[2]*(seg[1]-seg[0]+1), count + (seg[1]-seg[0]+1)
 	xavg, yavg = xavg // count, yavg // count
 	ax.add_patch(patches.Rectangle((xmin, ymin), xmax-xmin, ymax-ymin, linewidth=3, edgecolor='r', facecolor='none')) #draw box
-	plt.plot(xavg, yavg, 'b+', linewidth=28, markersize=20) #draw cross
+	plt.plot(xavg, yavg, 'b+', linewidth=20, markersize=16) #draw cross
 
 plt.axis('off')
 plt.savefig('output/connected_marked.jpg')
