@@ -5,7 +5,6 @@ import morph
 im = Image.open('binarized.bmp')
 (width,height), data_array = im.size, numpy.array(im)
 pic = morph.PIC.imToPic(data_array)
-#pic2 = morph.PIC(3,3,[(-1,0),(0,-1),(0,0),(0,1),(1,0)])
 Image.fromarray(pic.dilation(morph.tffft).toDataArray(), 'L').save('dilation.bmp')
 print('dilation completed!')
 Image.fromarray(pic.erosion(morph.tffft).toDataArray(), 'L').save('erosion.bmp')
