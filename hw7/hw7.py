@@ -16,7 +16,6 @@ def h(a, b, c, d):
 	return 'r' if vb==vc and vc==vd else 'q'
 
 def f(r, c):
-
 	ret = [h((r,c),(r,c+1),(r-1,c+1),(r-1,c)),\
 	h((r,c),(r-1,c),(r-1,c-1),(r,c-1)),\
 	h((r,c),(r,c-1),(r+1,c-1),(r+1,c)),\
