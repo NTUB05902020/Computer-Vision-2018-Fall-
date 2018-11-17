@@ -29,9 +29,7 @@ def ispair(r,c,yokois):
 	if c<(C-1) and yokois[r][c+1]==1: return True
 	return False
 
-i=0
 while True:
-	i = i+1
 	yokoiarr = np.array([[f(r,c) if arr[r][c]!=0 else -1 for c in range(C)] for r in range(R)])
 	pairarr = np.array([(r,c)for r in range(R) for c in range(C) if yokoiarr[r][c]==1 and ispair(r,c,yokoiarr)])
 	if len(pairarr)==0: break
